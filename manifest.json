@@ -1,0 +1,32 @@
+{
+  "manifest_version": 3,
+  "name": "Auto Meta - Automation for Meta AI",
+  "version": "1.0.0",
+  "description": "Automate your bulk video creation workflow on Meta AI Media. Saves time and boosts creativity. Developed by Đặng Minh Đức.",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "downloads",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://www.meta.ai/media/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icon.png",
+      "48": "icon.png",
+      "128": "icon.png"
+    }
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.meta.ai/media/*"],
+      "js": ["content.js"]
+    }
+  ]
+}
