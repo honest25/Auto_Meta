@@ -1,51 +1,66 @@
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.action === "start_automation") {
-    startProcessing(request.mode, request.prompts);
+// Helper: Wait for an element to appear in the DOM
+function waitForElement(selector, timeout = 10000) {
+  return new Promise((resolve, reject) => {
+    const interval = setInterval(() => {
+      const el = document.querySelector(selector);
+      if (el) {
+        clearInterval(interval);
+        resolve(el);
+      }
+    }, 500);
+    setTimeout(() => { clearInterval(interval); reject("Element timeout"); }, timeout);
+  });
+}
+
+// Helper: Simulate "Real" typing for React/Next.js apps
+function simulateTyping(element, text) {
+  const lastValue = element.value;
+  element.value = text;
+  const event = new Event('input', { bubbles: true });
+  // React 16+ tracker hack
+  const tracker = element._valueTracker;
+  if (tracker) tracker.setValue(lastValue);
+  element.dispatchEvent(event);
+}
+
+async function runAutomation(mode, prompts, waitTime, startIndex) {
+  const promptList = prompts.slice(startIndex);
+  
+  for (let i = 0; i < promptList.length; i++) {
+    try {
+      console.log(`Processing item ${i + startIndex + 1}...`);
+
+      // 1. Find the prompt box
+      const promptBox = await waitForElement('textarea[placeholder*="Ask"], textarea[id*="input"]');
+      simulateTyping(promptBox, promptList[i]);
+
+      // 2. Click Generate (The "Send" or "Create" arrow)
+      const sendBtn = document.querySelector('button[type="submit"], button[aria-label*="Send"]');
+      if (sendBtn) sendBtn.click();
+
+      // 3. Wait for the video to generate 
+      // (Meta AI usually shows a loading state or a specific video container)
+      await new Promise(r => setTimeout(r, waitTime * 1000));
+
+      // 4. Auto-Download check
+      const videos = document.querySelectorAll('video');
+      if (videos.length > 0) {
+        const latestVideo = videos[videos.length - 1].src;
+        if (latestVideo && latestVideo.startsWith('http')) {
+          chrome.runtime.sendMessage({ action: "download", url: latestVideo });
+        }
+      }
+
+    } catch (err) {
+      console.error("Auto Meta Error:", err);
+      break; 
+    }
+  }
+  alert("Auto Meta: Batch processing complete!");
+}
+
+chrome.runtime.onMessage.addListener((msg) => {
+  if (msg.action === "start") {
+    runAutomation(msg.mode, msg.prompts, msg.wait, msg.startAt);
   }
 });
-
-async function startProcessing(mode, prompts) {
-  console.log(`Starting Auto Meta in ${mode} mode...`);
-  
-  for (let i = 0; i < prompts.length; i++) {
-    let currentPrompt = prompts[i];
-    
-    // 1. Upload Image (If Image-to-Video mode)
-    if (mode === "image") {
-      // Logic to target the file input element on Meta AI and upload the image
-      // const fileInput = document.querySelector('input[type="file"]');
-    }
-
-    // 2. Type Prompt
-    const promptBox = document.querySelector('textarea[placeholder*="prompt"]'); // UPDATE SELECTOR
-    if (promptBox) {
-      promptBox.value = currentPrompt;
-      // Trigger React input events so the site registers the typing
-      promptBox.dispatchEvent(new Event('input', { bubbles: true }));
-    }
-
-    // 3. Click Generate Button
-    const generateBtn = document.querySelector('button[aria-label="Generate"]'); // UPDATE SELECTOR
-    if (generateBtn) {
-      generateBtn.click();
-    }
-
-    // 4. Wait for processing (15-30 seconds depending on settings)
-    await sleep(20000); 
-
-    // 5. Trigger Auto-Download (Check for new video element)
-    downloadLatestVideo();
-  }
-}
-
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-function downloadLatestVideo() {
-    // Find the generated video URL on the page and send it to the background script
-    const videoElement = document.querySelector('video'); // UPDATE SELECTOR
-    if (videoElement && videoElement.src) {
-        chrome.runtime.sendMessage({ action: "download", url: videoElement.src });
-    }
-}
