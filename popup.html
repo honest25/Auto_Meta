@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Auto Meta</title>
+  <style>
+    body { width: 320px; font-family: Arial, sans-serif; padding: 10px; }
+    textarea { width: 100%; height: 80px; margin-top: 10px; }
+    button { width: 100%; padding: 8px; margin-top: 10px; cursor: pointer; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <div id="wrong-page-warning" class="hidden">
+    <h3>Please navigate to Meta AI</h3>
+    <button id="go-to-meta">Go to Meta AI</button>
+  </div>
+
+  <div id="app-content">
+    <h3>🦆 Auto Meta</h3>
+    <input type="file" id="image-upload" multiple accept="image/*">
+    <p>Selected: <span id="image-count">0</span> images</p>
+    
+    <label>Mode: <strong id="mode-display">Text-to-Video</strong></label>
+    
+    <textarea id="prompt-list" placeholder="Enter prompts separated by a blank line..."></textarea>
+    <input type="file" id="prompt-file" accept=".txt">
+    
+    <button id="start-btn">Start Automation</button>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
